@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>马喽工作台 · 小红书卡片生成</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f5f2ed; color: #3a3a3a;
+  padding: 16px 20px; height: 100vh; overflow: hidden;
+}
+/* ── 顶栏 ── */
+.topbar {
+  max-width: 1400px; margin: 0 auto 16px;
+  display: flex; align-items: center; gap: 14px;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.btn-mode {
+  padding: 6px 14px; font-size: 12px; border: 1px solid #c4a97e; border-radius: 4px;
+  background: transparent; color: #8a7a60; cursor: pointer;
+  font-family: inherit; transition: .15s; white-space: nowrap;
+  text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+}
+.btn-mode:hover { background: #c4a97e; color: #fff; }
+.topbar-title { font-size: 17px; color: #8a7a60; font-weight: 600; }
+.topbar-status { font-size: 12px; color: #c4a97e; background: #fcf9f6; padding: 2px 8px; border-radius: 3px; }
+/* ── 工具栏 ── */
+.toolbar {
+  max-width: 1400px; margin: 0 auto 12px;
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.toolbar label { font-size: 13px; color: #6a6a6a; white-space: nowrap; }
+.toolbar input[type="text"] {
+  padding: 6px 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px;
+  background: #fff; font-family: inherit; outline: none;
+}
+.toolbar input[type="text"]:focus { border-color: #c4a97e; }
+#title-xhs { flex: 2; min-width: 180px; }
+.btn {
+  padding: 7px 16px; font-size: 13px; border: none; border-radius: 4px;
+  cursor: pointer; font-family: inherit; transition: .15s; white-space: nowrap;
+}
+.btn-primary { background: #c4a97e; color: #fff; }
+.btn-primary:hover { background: #b09760; }
+.btn-download { background: #b3534a; color: #fff; }
+.btn-download:hover { background: #93433a; }
+.btn-reset { background: #ddd; color: #666; }
+.btn-reset:hover { background: #ccc; }
+.btn-nav {
+  padding: 6px 12px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;
+  background: #fff; color: #666; cursor: pointer; font-family: inherit;
+  transition: .15s;
+}
+.btn-nav:hover { background: #f5f2ed; border-color: #c4a97e; color: #8a7a60; }
+.btn-nav:disabled { opacity: .3; cursor: default; }
+.btn-nav:disabled:hover { background: #fff; border-color: #ccc; color: #666; }
+.hint {
+  max-width: 1400px; margin: 0 auto 6px;
+  font-size: 12px; color: #ccc; text-align: left;
+}
+.hint code { background: #f0ede8; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+/* ── 主面板 ── */
+.main {
+  max-width: 1400px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  height: calc(100vh - 140px);
+  overflow: hidden;
+}
+@media (max-width: 768px) { .main { grid-template-columns: 1fr; } }
+.panel {
+  background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  display: flex; flex-direction: column; min-height: 300px;
+}
+.panel-title {
+  font-size: 13px; font-weight: 600; color: #8a7a60;
+  padding: 10px 14px; border-bottom: 1px solid #eee;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;
+}
+.panel-title .info { font-weight: 400; color: #aaa; font-size: 12px; }
+#markdown-input {
+  flex: 1; width: 100%; padding: 14px; font-size: 14px; line-height: 1.7;
+  border: none; outline: none; resize: vertical;
+  font-family: "SF Mono", "Cascadia Code", "Fira Code", Consolas, monospace;
+  color: #3a3a3a; background: #fafaf8;
+  min-height: 450px; tab-size: 2;
+}
+/* ── 小红书面板 ── */
+#panel-xhs { display: flex; flex-direction: column; }
+#xhs-preview-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 20px; min-height: 400px; background: #e8e0d4;
+  overflow: hidden;
+}
+#xhs-card-wrap {
+  border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  overflow: hidden; position: relative; flex: 0 0 auto;
+}
+#xhs-card-wrap .xhs-page { transform-origin: top left; }
+.xhs-navbar {
+  padding: 10px 14px; border-top: 1px solid #eee;
+  display: flex; justify-content: center; align-items: center; gap: 12px;
+}
+.xhs-navbar .page-num {
+  font-size: 14px; color: #666; min-width: 60px; text-align: center;
+  font-family: Georgia, serif;
+}
+.xhs-navbar .nav-right { margin-left: auto; display: flex; gap: 8px; }
+.status-bar {
+  max-width: 1400px; margin: 10px auto 0;
+  font-size: 12px; color: #aaa; text-align: right;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ 顶栏 ═══ -->
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html" class="btn-mode" id="btn-mode-switch">
+      <span>&#x2194;</span>
+      <span>切换到公众号</span>
+    </a>
+  </div>
+  <span class="topbar-title">马喽工作台 &#183; 小红书卡片生成</span>
+  <span class="topbar-status">小红书模式</span>
+</div>
+
+<!-- ═══ 工具栏 ═══ -->
+<div class="toolbar" id="toolbar-xhs">
+  <label>标题</label>
+  <input type="text" id="title-xhs" placeholder="封面标题，自动从 frontmatter 提取" />
+  <button class="btn btn-primary" id="btn-convert-xhs">&#x27F3; 生成卡片</button>
+  <button class="btn" id="btn-insert-img" style="background:#8a7a60;color:#fff;">&#x1F5BC; 插入图片</button>
+  <button class="btn btn-reset" id="reset-btn-xhs">清空</button>
+</div>
+<div class="hint" id="hint-xhs">
+  <kbd style="background:#eee;padding:1px 5px;border-radius:3px;font-size:11px;border:1px solid #ddd;">Ctrl+Enter</kbd>
+  生成卡片 &#183; <code>&gt; [红底]</code> 红色背景块 &#183; 点击「插入图片」或输入 <code>[img:N]</code>
+</div>
+
+<!-- ═══ 主区域 ═══ -->
+<div class="main" id="main-container">
+
+  <!-- 左侧：Markdown 输入 -->
+  <div class="panel">
+    <div class="panel-title">
+      Markdown 输入
+      <span class="info">支持 Obsidian 直接粘贴（含 frontmatter）</span>
+    </div>
+    <textarea id="markdown-input" placeholder="在此粘贴 Markdown 内容&#x2026;&#x2026;"></textarea>
+  </div>
+
+  <!-- 右侧：小红书卡片预览 -->
+  <div class="panel" id="panel-xhs">
+    <div class="panel-title">
+      卡片预览
+      <span class="info">1242 &#215; 1656 px</span>
+    </div>
+    <div id="xhs-preview-area">
+      <div id="xhs-card-wrap"></div>
+    </div>
+    <div class="xhs-navbar" id="xhs-navbar" style="display:none">
+      <button class="btn-nav" id="xhs-prev">&#x2190; 上一页</button>
+      <span class="page-num" id="xhs-page-num">1 / 1</span>
+      <button class="btn-nav" id="xhs-next">下一页 &#x2192;</button>
+      <div class="nav-right">
+        <button class="btn btn-download" id="xhs-download-all">&#x1F4E5; 下载全部</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="status-bar" id="status-bar">就绪</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+<script>
+(function() {
+  "use strict";
+
+  /* ==========================================================
+     0. DOM
+     ========================================================== */
+  var el = {
+    input:      document.getElementById('markdown-input'),
+    titleXhs:   document.getElementById('title-xhs'),
+    status:     document.getElementById('status-bar'),
+    cardWrap:   document.getElementById('xhs-card-wrap'),
+    previewArea:document.getElementById('xhs-preview-area'),
+    navbar:     document.getElementById('xhs-navbar'),
+    pageNum:    document.getElementById('xhs-page-num'),
+    btnPrev:    document.getElementById('xhs-prev'),
+    btnNext:    document.getElementById('xhs-next'),
+    btnDl:      document.getElementById('xhs-download-all'),
+    btnXhs:     document.getElementById('btn-convert-xhs'),
+    resetBtn:   document.getElementById('reset-btn-xhs'),
+    btnImg:     document.getElementById('btn-insert-img'),
+  };
+  var missing = [];
+  for (var k in el) { if (!el[k]) missing.push(k); }
+  if (missing.length) {
+    document.body.innerHTML = '<p style="color:#c00;padding:40px;font-size:16px;">&#x274C; 元素缺失: '+missing.join(',')+'</p>';
+    return;
+  }
+
+  /* ==========================================================
+     1. 状态
+     ========================================================== */
+  var xhsPages = [];      // 所有卡片的 HTML
+  var xhsCurrent = 0;     // 当前页码（0-based）
+
+  /* ==========================================================
+     2. 公用
+     ========================================================== */
+  var C_XHS = { bg:'#f8f8f6', red:'#b5554a', txt:'#333333', light:'#b0a090', box:'#f3f2ed', line:'#d8d4cc' };
+
+  var amberExt = {
+    name:'amber', level:'inline',
+    start:function(s){return s.indexOf('==');},
+    tokenizer:function(s){var m=s.match(/^==([^=]+?)==/);return m?{type:'amber',raw:m[0],text:m[1].trim()}:void 0;},
+    renderer:function(t){return '<span class="em-amber" style="color:rgb(193,122,43);"><strong>'+t.text+'</strong></span>';}
+  };
+  if (typeof marked !== 'undefined') marked.use({ extensions:[amberExt] });
+
+  function extractFrontmatter(md) {
+    var m = md.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);
+    if (!m) return { body: md, title: null };
+    var fm=m[1], body=md.slice(m[0].length).trim(), title=null;
+    var tm=fm.match(/^(?:标题|title)[：:]\s*['"](.+)['"]$/m)||fm.match(/^(?:标题|title)[：:]\s*(.+)$/m);
+    if(tm) title=tm[1].trim();
+    return { body:body, title:title };
+  }
+
+  function preprocessFooter(md) {
+    return md.replace(/::: ?footer\s*\n([\s\S]*?):::/g, function(_, c) {
+      var lines=c.trim().split('\n'), out='';
+      for(var i=0;i<lines.length;i++){
+        var t=lines[i].trim();
+        if(!t) continue;
+        if(/^\u2014\s*END\s*\u2014/.test(t)){
+          out+='<p style="margin:30px 0 10px;font-size:12px;color:#999;line-height:1.8;text-align:center;font-family:sans-serif">\u2014 END \u2014</p>\n';
+        } else {
+          var l=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+          l=l.replace(/==(.+?)==/g,'<span class="em-amber" style="color:rgb(193,122,43);"><strong>$1</strong></span>');
+          out+='<p style="margin:20px 0 10px;font-size:13px;color:#999;line-height:1.8;font-family:sans-serif">'+l+'</p>\n';
+        }
+      }
+      return out;
+    });
+  }
+
+  function xhsFooterHtml(pageNum) {
+    var C=C_XHS;
+    return '<div style="position:absolute;bottom:45px;left:75px;right:75px;">'
+      +'<div style="height:2px;background:'+C.line+';margin-bottom:12px;"></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+      +'<span style="font-size:26px;color:'+C.light+';letter-spacing:4px;font-family:\'Noto Sans SC\',sans-serif;">ADOLESCENT \u00b7 EDUCATION</span>'
+      +'<span style="font-size:26px;color:'+C.light+';font-family:Georgia,serif;">'+pageNum+'</span>'
+      +'</div></div></div>';
+  }
+
+  /* ── 图片存储 ── */
+  var xhsImages = {};      // {1: 'data:image/...', 2: '...'}
+  var xhsImgCounter = 0;
+  function insertXhsImage() {
+    var inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        xhsImgCounter++;
+        xhsImages[xhsImgCounter] = ev.target.result;
+        var ta = el.input, marker = '\n[img:' + xhsImgCounter + ']\n';
+        var s = ta.selectionStart, end = ta.selectionEnd;
+        ta.value = ta.value.substring(0, s) + marker + ta.value.substring(end);
+        ta.focus();
+        ta.selectionStart = ta.selectionEnd = s + marker.length;
+        el.status.textContent = '已插入图片 #' + xhsImgCounter;
+      };
+      reader.readAsDataURL(file);
+    };
+    inp.click();
+  }
+
+  /* ==========================================================
+     3. 小红书排版
+     ========================================================== */
+  function renderXiaohongshu() {
+    var md=el.input.value, title=(el.titleXhs.value||'').trim();
+    if(!md.trim()){el.status.textContent='等待输入\u2026';return;}
+    if(typeof marked==='undefined'){el.status.textContent='\u26A0\uFE0F marked.js 未加载';return;}
+    try {
+      var fm=extractFrontmatter(md), cleanMd=fm.body;
+      var displayTitle=title||fm.title||'';
+      if(!displayTitle){var m=cleanMd.match(/^#\s+(.+)/m);if(m)displayTitle=m[1];}
+      cleanMd=cleanMd.replace(/^#\s+.+/m,'').trim();
+      cleanMd=preprocessFooter(cleanMd);
+      cleanMd=cleanMd.replace(/^---+$/gm,'').trim();
+      var C=C_XHS;
+
+      marked.setOptions({breaks:false,gfm:true});
+      var bodyHtml=marked.parse(cleanMd);
+      var tmp=document.createElement('div');tmp.innerHTML=bodyHtml;
+      // 解析 blocks：检测 [img:N] 和 [红底] 标记
+      var blocks=[];
+      for(var i=0;i<tmp.children.length;i++){
+        var ch=tmp.children[i], tag=ch.tagName;
+        if(tag==='H2') blocks.push({type:'h2',html:ch.innerHTML});
+        else if(tag==='H3') blocks.push({type:'h3',html:ch.innerHTML});
+        else if(tag==='BLOCKQUOTE'){
+          var bq=ch.innerHTML.replace(/<p\b[^>]*>/g,'').replace(/<\/p>/g,'').trim();
+          if(/^\[红底\]/.test(bq)){
+            blocks.push({type:'redblock',html:bq.replace(/^\[红底\]\s*/,'')});
+          }else{
+            blocks.push({type:'highlight',html:bq});
+          }
+        }
+        else if(tag==='UL'||tag==='OL') blocks.push({type:'list',html:ch.innerHTML});
+        else if(tag==='P'){
+          var t=ch.innerHTML.trim();
+          if(!t) continue;
+          var imgM=t.match(/^\[img:(\d+)\]$/);
+          if(imgM){
+            var imgId=parseInt(imgM[1]);
+            if(xhsImages[imgId]){
+              blocks.push({type:'image',src:xhsImages[imgId],id:imgId});
+            }else{
+              blocks.push({type:'p',html:'[图片 #'+imgId+' 未加载，请重新插入]'});
+            }
+            continue;
+          }
+          blocks.push({type:'p',html:t});
+        }
+      }
+
+      xhsPages=[];
+
+      // ── 辅助：估算 block 高度 ──
+      function estLines(html){
+        var t=html.replace(/<[^>]+>/g,'').replace(/&[^;]+;/g,' ');
+        return Math.max(1,Math.ceil(t.length/34));
+      }
+      function blockH(b,gap){
+        if(b.type==='p') return estLines(b.html)*53+gap;
+        if(b.type==='h2') return gap+66;
+        if(b.type==='h3') return gap+53;
+        if(b.type==='highlight') return gap+46+estLines(b.html)*53;
+        if(b.type==='redblock') return gap+46+estLines(b.html)*53;
+        if(b.type==='list') return gap+estLines(b.html)*60;
+        if(b.type==='image') return gap+900;
+        return gap;
+      }
+
+      // ── 封面：标题 + 横线 + 前几段正文 ──
+      var COVER_BODY=1100, covH=0, covIdx=0;
+      for(var i=0;i<blocks.length;i++){
+        var b=blocks[i], cgap=(covH===0?0:34);
+        var ch=blockH(b,cgap);
+        if(covH+ch>COVER_BODY&&covIdx>0) break;
+        covH+=ch; covIdx=i+1;
+      }
+
+      var cover='<div class="xhs-page" style="width:1242px;height:1656px;background:'+C.bg+';padding:130px 75px 95px;position:relative;overflow:hidden;font-family:\'Noto Sans SC\',\'Source Han Sans SC\',sans-serif;">'
+        +'<div style="font-size:58px;font-weight:700;color:#000000;line-height:1.35;letter-spacing:2px;">'+displayTitle.replace(/\n/g,'<br>')+'</div>'
+        +'<div style="width:100%;height:3px;background:'+C.red+';margin:27px 0 55px;"></div>';
+
+      for(var i=0;i<covIdx;i++){
+        var b=blocks[i], cgap=(i===0?0:34);
+        if(b.type==='p'){
+          cover+=(cgap?'<div style="height:'+cgap+'px;"></div>':'')
+               +'<p style="margin:0;font-size:32px;line-height:1.65;color:'+C.txt+';">'+b.html+'</p>';
+        }else if(b.type==='h2'){
+          cover+=(cgap?'<div style="height:'+cgap+'px;"></div>':'')
+               +'<div style="margin:0 0 6px;padding-left:24px;position:relative;font-size:46px;font-weight:600;color:'+C.red+';line-height:1.3;">'
+               +'<span style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:37px;background:'+C.red+';border-radius:2px;"></span>'
+               +b.html+'</div>';
+        }else if(b.type==='h3'){
+          cover+=(cgap?'<div style="height:'+cgap+'px;"></div>':'')
+               +'<div style="margin:0 0 4px;font-size:38px;color:'+C.red+';font-weight:600;line-height:1.3;">\u2726 '+b.html+'</div>';
+        }else if(b.type==='highlight'){
+          cover+=(cgap?'<div style="height:'+cgap+'px;"></div>':'')
+               +'<div style="padding:23px 27px;background:'+C.box+';border-left:4px solid '+C.red+';border-radius:4px;font-size:32px;line-height:1.65;color:'+C.txt+';">'+b.html+'</div>';
+        }else if(b.type==='redblock'){
+          cover+=(cgap?'<div style="height:'+cgap+'px;"></div>':'')
+               +'<div style="padding:23px 27px;background:'+C.red+';border-radius:4px;font-size:32px;line-height:1.65;color:#fff;font-weight:600;">'+b.html+'</div>';
+        }else if(b.type==='list'){
+          cover+=(cgap?'<div style="height:'+cgap+'px;"></div>':'')
+               +'<ul style="margin:0;padding-left:10px;font-size:32px;line-height:1.65;color:'+C.txt+';">'+b.html+'</ul>';
+        }else if(b.type==='image'){
+          cover+=(cgap?'<div style="height:'+cgap+'px;"></div>':'')
+               +'<div style="text-align:center;margin:53px 0;"><img src="'+b.src+'" style="max-width:100%;max-height:850px;border-radius:4px;" onerror="this.outerHTML=\'<p style=color:#999;font-size:26px;text-align:center;>图片加载失败</p>\'" /></div>';
+        }
+      }
+      cover+=xhsFooterHtml(1)+'</div>';
+      xhsPages.push(cover);
+
+      // ── 内容页（从 covIdx 开始）──
+      var SPACER=60, TIGHT=34, PAGE_H=1200;
+      var ci='', prevType='', estH=0, justStarted=false;
+      function startPage(){
+        ci='<div class="xhs-page" style="width:1242px;height:1656px;background:'+C.bg+';padding:95px 75px 95px;position:relative;overflow:hidden;font-family:\'Noto Sans SC\',\'Source Han Sans SC\',sans-serif;">'
+          +'<div style="position:absolute;top:28px;right:75px;font-size:26px;font-family:\'Noto Sans SC\',sans-serif;color:'+C.light+';letter-spacing:4px;">\u2014\u2014 初高中厌学教练 \u00b7 浙大董老师</div>';
+      }
+      function closePage(){
+        ci+=xhsFooterHtml(xhsPages.length+1);
+        xhsPages.push(ci);
+        estH=0; prevType='';
+      }
+      for(var i=covIdx;i<blocks.length;i++){
+        if(estH===0 && !justStarted) startPage();
+        justStarted=false;
+        var b=blocks[i], isFirst=(estH===0);
+        var gap=isFirst?0:(b.type===prevType?TIGHT:SPACER);
+        var bh=blockH(b,gap);
+        if(b.type==='p'){
+          ci+=(gap?'<div style="height:'+gap+'px;"></div>':'')
+             +'<p style="margin:0;font-size:32px;line-height:1.65;color:'+C.txt+';">'+b.html+'</p>';
+        }else if(b.type==='h2'){
+          ci+=(gap?'<div style="height:'+gap+'px;"></div>':'')
+             +'<div style="margin:0 0 6px;padding-left:24px;position:relative;font-size:46px;font-weight:600;color:'+C.red+';line-height:1.3;">'
+             +'<span style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:37px;background:'+C.red+';border-radius:2px;"></span>'
+             +b.html+'</div>';
+        }else if(b.type==='h3'){
+          ci+=(gap?'<div style="height:'+gap+'px;"></div>':'')
+             +'<div style="margin:0 0 4px;font-size:38px;color:'+C.red+';font-weight:600;line-height:1.3;">\u2726 '+b.html+'</div>';
+        }else if(b.type==='highlight'){
+          ci+=(gap?'<div style="height:'+gap+'px;"></div>':'')
+             +'<div style="padding:23px 27px;background:'+C.box+';border-left:4px solid '+C.red+';border-radius:4px;font-size:32px;line-height:1.65;color:'+C.txt+';">'+b.html+'</div>';
+        }else if(b.type==='redblock'){
+          ci+=(gap?'<div style="height:'+gap+'px;"></div>':'')
+             +'<div style="padding:23px 27px;background:'+C.red+';border-radius:4px;font-size:32px;line-height:1.65;color:#fff;font-weight:600;">'+b.html+'</div>';
+        }else if(b.type==='list'){
+          ci+=(gap?'<div style="height:'+gap+'px;"></div>':'')
+             +'<ul style="margin:0;padding-left:10px;font-size:32px;line-height:1.65;color:'+C.txt+';">'+b.html+'</ul>';
+        }else if(b.type==='image'){
+          ci+=(gap?'<div style="height:'+gap+'px;"></div>':'')
+             +'<div style="text-align:center;margin:53px 0;"><img src="'+b.src+'" style="max-width:100%;max-height:850px;border-radius:4px;" onerror="this.outerHTML=\'<p style=color:#999;font-size:26px;text-align:center;>图片加载失败</p>\'" /></div>';
+        }
+        estH+=bh;
+        prevType=b.type;
+        var isLast=(i===blocks.length-1);
+        if(estH>PAGE_H&&!isLast){
+          closePage();
+          startPage();
+          estH=0;
+          justStarted=true;
+          prevType='';
+        }
+        if(isLast) closePage();
+      }
+
+      // 显示第 0 页
+      xhsCurrent=0;
+      showXhsPage(0);
+      el.navbar.style.display='flex';
+      el.status.textContent='已生成 | 共 '+xhsPages.length+' 页';
+    }catch(e){el.status.textContent='\u274C 出错: '+e.message;console.error(e);}
+  }
+
+  /* 显示指定页码的卡片 */
+  function showXhsPage(idx) {
+    if(!xhsPages.length){el.cardWrap.innerHTML='';return;}
+    xhsCurrent=Math.max(0,Math.min(idx,xhsPages.length-1));
+    var availW=el.previewArea.clientWidth-40;
+    var availH=el.previewArea.clientHeight-40;
+    var scale=Math.min(1,availW/1242,availH/1656);
+    scale=Math.max(0.3,scale);
+    el.cardWrap.style.width=Math.round(1242*scale)+'px';
+    el.cardWrap.style.height=Math.round(1656*scale)+'px';
+    el.cardWrap.innerHTML=xhsPages[xhsCurrent];
+    var page=el.cardWrap.querySelector('.xhs-page');
+    if(page){
+      page.style.transform='scale('+scale+')';
+      page.style.transformOrigin='0 0';
+      page.style.position='absolute';
+      page.style.top='0';
+      page.style.left='0';
+    }
+    el.pageNum.textContent=(xhsCurrent+1)+' / '+xhsPages.length;
+    el.btnPrev.disabled=(xhsCurrent===0);
+    el.btnNext.disabled=(xhsCurrent===xhsPages.length-1);
+  }
+
+  /* 缩放单张卡片适配面板（宽高双重约束） */
+  function fitXhsCard() {
+    var page=el.cardWrap.querySelector('.xhs-page');
+    if(!page) return;
+    var availW=el.previewArea.clientWidth-40;
+    var availH=el.previewArea.clientHeight-40;
+    if(availW<100||availH<100){setTimeout(fitXhsCard,50);return;}
+    var scale=Math.min(1,availW/1242,availH/1656);
+    el.cardWrap.style.width=Math.round(1242*scale)+'px';
+    el.cardWrap.style.height=Math.round(1656*scale)+'px';
+    page.style.transform='scale('+scale+')';
+    page.style.transformOrigin='0 0';
+    page.style.position='absolute';
+    page.style.top='0';
+    page.style.left='0';
+  }
+
+  /* ==========================================================
+     4. 下载全部 PNG
+     ========================================================== */
+  function downloadAllXhs() {
+    if(!xhsPages.length){alert('请先生成卡片');return;}
+    var zip=new JSZip(), total=xhsPages.length;
+    el.status.textContent='渲染中... 0/'+total;
+    el.btnDl.disabled=true;
+    function render(idx){
+      if(idx>=total){
+        zip.generateAsync({type:'blob'}).then(function(blob){
+          var url=URL.createObjectURL(blob);
+          var a=document.createElement('a');a.href=url;a.download='初高中厌学教练_全文.zip';a.click();
+          URL.revokeObjectURL(url);
+          el.status.textContent='下载完成: '+total+' 页';
+          el.btnDl.disabled=false;
+        });
+        return;
+      }
+      el.status.textContent='渲染中... '+(idx+1)+'/'+total;
+      var w=document.createElement('div');
+      w.style.cssText='position:absolute;left:-9999px;top:0;width:1242px;height:1656px;';
+      w.innerHTML=xhsPages[idx];
+      document.body.appendChild(w);
+      html2canvas(w,{scale:2,width:1242,height:1656,useCORS:true,backgroundColor:'#f8f8f6'})
+        .then(function(canvas){
+          canvas.toBlob(function(blob){
+            zip.file('初高中厌学教练_第'+(idx+1)+'页.png',blob);
+            document.body.removeChild(w);
+            render(idx+1);
+          });
+        }).catch(function(err){console.error(err);document.body.removeChild(w);render(idx+1);});
+    }
+    render(0);
+  }
+
+  /* ==========================================================
+     5. 其他
+     ========================================================== */
+  function resetAll(){
+    el.input.value='';el.titleXhs.value='';
+    el.cardWrap.innerHTML='';xhsPages=[];xhsCurrent=0;
+    el.navbar.style.display='none';el.status.textContent='已清空';
+  }
+
+  /* ==========================================================
+     6. 事件绑定
+     ========================================================== */
+  el.btnXhs.addEventListener('click',renderXiaohongshu);
+  el.resetBtn.addEventListener('click',resetAll);
+  el.btnImg.addEventListener('click',insertXhsImage);
+  el.btnDl.addEventListener('click',downloadAllXhs);
+  el.btnPrev.addEventListener('click',function(){if(xhsCurrent>0) showXhsPage(xhsCurrent-1);});
+  el.btnNext.addEventListener('click',function(){if(xhsCurrent<xhsPages.length-1) showXhsPage(xhsCurrent+1);});
+  el.input.addEventListener('keydown',function(e){
+    if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();renderXiaohongshu();}
+  });
+  // 键盘左右键翻页
+  document.addEventListener('keydown',function(e){
+    if(!xhsPages.length) return;
+    if(e.key==='ArrowLeft'&&xhsCurrent>0){showXhsPage(xhsCurrent-1);e.preventDefault();}
+    if(e.key==='ArrowRight'&&xhsCurrent<xhsPages.length-1){showXhsPage(xhsCurrent+1);e.preventDefault();}
+  });
+  // 窗口 resize 自适应
+  window.addEventListener('resize',function(){if(xhsPages.length) fitXhsCard();});
+
+  // 初始化
+  el.status.textContent='就绪';
+  if(typeof marked==='undefined') el.status.textContent='\u26A0\uFE0F 正在加载 marked.js\u2026';
+})();
+</script>
+</body>
+</html>
