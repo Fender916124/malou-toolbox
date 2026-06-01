@@ -4,113 +4,67 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>马喽工作台 · 小红书卡片生成</title>
+<link rel="stylesheet" href="common.css">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: #f5f2ed; color: #3a3a3a;
-  padding: 16px 20px; height: 100vh; overflow: hidden;
-}
-/* ── 顶栏 ── */
-.topbar {
-  max-width: 1400px; margin: 0 auto 16px;
-  display: flex; align-items: center; gap: 14px;
-}
-.topbar-left { display: flex; align-items: center; gap: 10px; }
-.btn-mode {
-  padding: 6px 14px; font-size: 12px; border: 1px solid #c4a97e; border-radius: 4px;
-  background: transparent; color: #8a7a60; cursor: pointer;
-  font-family: inherit; transition: .15s; white-space: nowrap;
-  text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
-}
-.btn-mode:hover { background: #c4a97e; color: #fff; }
-.topbar-title { font-size: 17px; color: #8a7a60; font-weight: 600; }
-.topbar-status { font-size: 12px; color: #c4a97e; background: #fcf9f6; padding: 2px 8px; border-radius: 3px; }
-/* ── 工具栏 ── */
-.toolbar {
-  max-width: 1400px; margin: 0 auto 12px;
-  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-}
-.toolbar label { font-size: 13px; color: #6a6a6a; white-space: nowrap; }
-.toolbar input[type="text"] {
-  padding: 6px 10px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px;
-  background: #fff; font-family: inherit; outline: none;
-}
-.toolbar input[type="text"]:focus { border-color: #c4a97e; }
+
+/* ── 输入框 ── */
 #title-xhs { flex: 2; min-width: 180px; }
-.btn {
-  padding: 7px 16px; font-size: 13px; border: none; border-radius: 4px;
-  cursor: pointer; font-family: inherit; transition: .15s; white-space: nowrap;
-}
-.btn-primary { background: #c4a97e; color: #fff; }
-.btn-primary:hover { background: #b09760; }
-.btn-download { background: #b3534a; color: #fff; }
-.btn-download:hover { background: #93433a; }
-.btn-reset { background: #ddd; color: #666; }
-.btn-reset:hover { background: #ccc; }
-.btn-nav {
-  padding: 6px 12px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;
-  background: #fff; color: #666; cursor: pointer; font-family: inherit;
-  transition: .15s;
-}
-.btn-nav:hover { background: #f5f2ed; border-color: #c4a97e; color: #8a7a60; }
-.btn-nav:disabled { opacity: .3; cursor: default; }
-.btn-nav:disabled:hover { background: #fff; border-color: #ccc; color: #666; }
-.hint {
-  max-width: 1400px; margin: 0 auto 6px;
-  font-size: 12px; color: #ccc; text-align: left;
-}
-.hint code { background: #f0ede8; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
-/* ── 主面板 ── */
+
+/* ── 主面板布局 ── */
 .main {
-  max-width: 1400px; margin: 0 auto;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  max-width: 1400px; margin: 0 auto 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
   height: calc(100vh - 140px);
   overflow: hidden;
 }
 @media (max-width: 768px) { .main { grid-template-columns: 1fr; } }
-.panel {
-  background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
-  display: flex; flex-direction: column; min-height: 300px;
-}
-.panel-title {
-  font-size: 13px; font-weight: 600; color: #8a7a60;
-  padding: 10px 14px; border-bottom: 1px solid #eee;
-  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;
-}
-.panel-title .info { font-weight: 400; color: #aaa; font-size: 12px; }
+
 #markdown-input {
-  flex: 1; width: 100%; padding: 14px; font-size: 14px; line-height: 1.7;
+  flex: 1; width: 100%; padding: 14px; font-size: 13px; line-height: 1.65;
   border: none; outline: none; resize: vertical;
   font-family: "SF Mono", "Cascadia Code", "Fira Code", Consolas, monospace;
-  color: #3a3a3a; background: #fafaf8;
+  color: var(--c-text); background: #fafbfc;
   min-height: 450px; tab-size: 2;
 }
+#markdown-input::placeholder { color: var(--c-text-tertiary); }
+
 /* ── 小红书面板 ── */
 #panel-xhs { display: flex; flex-direction: column; }
 #xhs-preview-area {
   flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 20px; min-height: 400px; background: #e8e0d4;
+  padding: 24px; min-height: 400px; background: #e9ecef;
   overflow: hidden;
 }
 #xhs-card-wrap {
-  border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,.12);
   overflow: hidden; position: relative; flex: 0 0 auto;
+  background: #fff;
 }
 #xhs-card-wrap .xhs-page { transform-origin: top left; }
 .xhs-navbar {
-  padding: 10px 14px; border-top: 1px solid #eee;
+  padding: 10px 16px; border-top: 1px solid var(--c-border);
   display: flex; justify-content: center; align-items: center; gap: 12px;
 }
 .xhs-navbar .page-num {
-  font-size: 14px; color: #666; min-width: 60px; text-align: center;
-  font-family: Georgia, serif;
+  font-size: 13px; color: var(--c-text-secondary); min-width: 60px; text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 .xhs-navbar .nav-right { margin-left: auto; display: flex; gap: 8px; }
-.status-bar {
-  max-width: 1400px; margin: 10px auto 0;
-  font-size: 12px; color: #aaa; text-align: right;
+
+/* ── 导航按钮 ── */
+.btn-nav {
+  padding: 6px 14px; font-size: 13px; border: 1px solid var(--c-border); border-radius: var(--radius-sm);
+  background: #fff; color: var(--c-text-secondary); cursor: pointer; font-family: inherit;
+  transition: all var(--transition);
 }
+.btn-nav:hover { background: #f7f8f9; border-color: var(--c-border-hover); color: var(--c-text); }
+.btn-nav:disabled { opacity: .35; cursor: default; }
+.btn-nav:disabled:hover { background: #fff; border-color: var(--c-border); color: var(--c-text-secondary); }
+
+/* ── 下载全部按钮 ── */
+.btn-download { background: var(--c-red); color: #fff; border: none; }
+.btn-download:hover { background: #b13e3a; }
 </style>
 </head>
 <body>
@@ -136,11 +90,11 @@ body {
   <label>标题</label>
   <input type="text" id="title-xhs" placeholder="封面标题，自动从 frontmatter 提取" />
   <button class="btn btn-primary" id="btn-convert-xhs">&#x27F3; 生成卡片</button>
-  <button class="btn" id="btn-insert-img" style="background:#8a7a60;color:#fff;">&#x1F5BC; 插入图片</button>
+  <button class="btn btn-secondary" id="btn-insert-img">&#x1F5BC; 插入图片</button>
   <button class="btn btn-reset" id="reset-btn-xhs">清空</button>
 </div>
 <div class="hint" id="hint-xhs">
-  <kbd style="background:#eee;padding:1px 5px;border-radius:3px;font-size:11px;border:1px solid #ddd;">Ctrl+Enter</kbd>
+  <kbd>Ctrl+Enter</kbd>
   生成卡片 &#183; <code>&gt; [红底]</code> 红色背景块 &#183; 点击「插入图片」或输入 <code>[img:N]</code>
 </div>
 

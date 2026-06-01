@@ -4,13 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>马喽工具箱</title>
+
+<link rel="stylesheet" href="common.css">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-  background: #f5f2ed;
-  color: #3a3a3a;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
   height: 100vh;
   overflow: hidden;
   display: flex;
@@ -20,77 +22,60 @@ body {
   position: relative;
 }
 
-/* ── 背景装饰 ── */
-.bg-deco {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.04;
-  pointer-events: none;
-}
-.bg-deco-1 {
-  width: 600px; height: 600px;
-  background: #c4a97e;
-  top: -200px; left: -150px;
-}
-.bg-deco-2 {
-  width: 400px; height: 400px;
-  background: #b3534a;
-  bottom: -100px; right: -80px;
-}
-.bg-deco-3 {
-  width: 200px; height: 200px;
-  background: #c4a97e;
-  bottom: 30%; right: 10%;
-}
-
 /* ── 内容容器 ── */
 .container {
   text-align: center;
   z-index: 1;
-  animation: fadeUp 0.8s ease-out;
+  animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(30px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── 标题区 ── */
 .logo-deco {
-  font-size: 42px;
-  margin-bottom: 10px;
-  letter-spacing: 6px;
-}
-.main-title {
-  font-size: 64px;
-  font-weight: 800;
-  color: #3a3a3a;
-  letter-spacing: 8px;
-  line-height: 1.2;
+  font-size: 36px;
   margin-bottom: 16px;
+  display: inline-block;
+  width: 64px; height: 64px; line-height: 64px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.main-title {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--c-text);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin-bottom: 8px;
 }
 .main-title .accent {
-  color: #c4a97e;
+  color: var(--c-accent);
 }
 .subtitle {
-  font-size: 18px;
-  color: #a09888;
-  letter-spacing: 6px;
-  margin-bottom: 60px;
-  font-weight: 300;
+  font-size: 15px;
+  color: var(--c-text-secondary);
+  letter-spacing: 0.5px;
+  margin-bottom: 48px;
+  font-weight: 400;
 }
 .divider {
-  width: 60px;
-  height: 3px;
-  background: #c4a97e;
-  margin: 0 auto 60px;
-  border-radius: 2px;
+  width: 32px;
+  height: 2px;
+  background: var(--c-border-hover);
+  margin: 0 auto 48px;
+  border-radius: 1px;
 }
 
 /* ── 工具卡片 ── */
 .cards {
   display: flex;
-  gap: 32px;
+  gap: 20px;
   justify-content: center;
   flex-wrap: wrap;
 }
@@ -100,14 +85,14 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 240px;
-  height: 200px;
-  background: #fff;
-  border-radius: 12px;
+  width: 260px;
+  height: 180px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
   text-decoration: none;
-  color: #3a3a3a;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  transition: all 0.25s ease;
+  color: var(--c-text);
+  transition: all var(--transition);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -116,83 +101,80 @@ body {
 .card::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
-  transition: height 0.25s ease;
+  top: 0; left: 12px; right: 12px;
+  height: 3px;
+  border-radius: 0 0 2px 2px;
+  transition: all var(--transition);
+  opacity: 0;
 }
 
-.card-xhs::before {
-  background: #b3534a;
-}
-.card-wechat::before {
-  background: #c4a97e;
-}
+.card-xhs::before { background: var(--c-red); }
+.card-wechat::before { background: var(--c-accent); }
 
 .card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+  transform: translateY(-4px);
+  border-color: var(--c-border-hover);
+  box-shadow: var(--shadow-md);
 }
 
 .card:hover::before {
-  height: 6px;
+  opacity: 1;
 }
 
 .card:active {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .card-icon {
-  font-size: 52px;
-  margin-bottom: 14px;
-  transition: transform 0.25s ease;
+  font-size: 44px;
+  margin-bottom: 16px;
+  transition: transform var(--transition);
 }
 
 .card:hover .card-icon {
-  transform: scale(1.1);
+  transform: scale(1.06);
 }
 
 .card-title {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 600;
-  letter-spacing: 2px;
+  letter-spacing: 0;
   margin-bottom: 4px;
+  color: var(--c-text);
 }
 
 .card-desc {
   font-size: 13px;
-  color: #a09888;
-  letter-spacing: 1px;
+  color: var(--c-text-secondary);
+  letter-spacing: 0;
+  font-weight: 400;
 }
 
 /* ── 页脚 ── */
 .footer {
   position: absolute;
-  bottom: 32px;
-  font-size: 13px;
-  color: #d0c8b8;
-  letter-spacing: 2px;
+  bottom: 28px;
+  font-size: 12px;
+  color: var(--c-text-tertiary);
+  letter-spacing: 0.5px;
   z-index: 1;
 }
 
 /* ── 响应式 ── */
 @media (max-width: 600px) {
-  .main-title { font-size: 40px; letter-spacing: 4px; }
-  .subtitle { font-size: 15px; letter-spacing: 4px; margin-bottom: 40px; }
-  .divider { margin-bottom: 40px; }
-  .cards { gap: 20px; }
-  .card { width: 180px; height: 160px; }
-  .card-icon { font-size: 40px; }
-  .card-title { font-size: 17px; }
-  .logo-deco { font-size: 32px; }
+  .main-title { font-size: 28px; letter-spacing: 0; }
+  .subtitle { font-size: 14px; margin-bottom: 36px; }
+  .divider { margin-bottom: 36px; }
+  .cards { gap: 14px; }
+  .card { width: 200px; height: 150px; }
+  .card-icon { font-size: 36px; margin-bottom: 12px; }
+  .card-title { font-size: 15px; }
+  .card-desc { font-size: 12px; }
+  .logo-deco { font-size: 28px; width: 52px; height: 52px; line-height: 52px; }
 }
 </style>
 </head>
 <body>
-
-  <!-- 背景装饰 -->
-  <div class="bg-deco bg-deco-1"></div>
-  <div class="bg-deco bg-deco-2"></div>
-  <div class="bg-deco bg-deco-3"></div>
 
   <!-- 内容 -->
   <div class="container">
