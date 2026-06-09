@@ -281,6 +281,12 @@
           }
         }
         else if(tag==='UL'||tag==='OL') blocks.push({type:'list',html:ch.innerHTML});
+        else if(tag==='TABLE'){
+          var thtml=ch.innerHTML;
+          thtml=thtml.replace(/<th\b([^>]*)>/g,'<th style="color:'+C.red+';padding:16px 20px;text-align:left;font-weight:600;font-size:31px;border:1px solid #D6D6D6;"$1>');
+          thtml=thtml.replace(/<td\b([^>]*)>/g,'<td style="padding:16px 20px;color:'+C.txt+';font-size:30px;border:1px solid #D6D6D6;"$1>');
+          blocks.push({type:'table',html:thtml});
+        }
         else if(tag==='P'){
           var t=ch.innerHTML.trim();
           if(!t) continue;
@@ -313,6 +319,10 @@
         if(b.type==='redblock') return gap+46+estLines(b.html)*53;
         if(b.type==='list') return gap+estLines(b.html)*60;
         if(b.type==='image') return gap+900;
+        if(b.type==='table'){
+          var rows=(b.html.match(/<tr\b/gi)||[]).length;
+          return gap+rows*72;
+        }
         return gap;
       }
 
@@ -354,6 +364,9 @@
         }else if(b.type==='image'){
           cover+=(cgap?'<div style="height:'+cgap+'px;"></div>':'')
                +'<div style="text-align:center;margin:53px 0;"><img src="'+b.src+'" style="max-width:100%;max-height:850px;border-radius:4px;" onerror="this.outerHTML=\'<p style=color:#999;font-size:26px;text-align:center;>图片加载失败</p>\'" /></div>';
+        }else if(b.type==='table'){
+          cover+=(cgap?'<div style="height:'+cgap+'px;"></div>':'')
+               +'<table style="margin:0;border-collapse:collapse;width:100%;font-size:30px;" cellpadding="0" cellspacing="0">'+b.html+'</table>';
         }
       }
       cover+=xhsFooterHtml(1)+'</div>';
@@ -400,6 +413,9 @@
         }else if(b.type==='image'){
           ci+=(gap?'<div style="height:'+gap+'px;"></div>':'')
              +'<div style="text-align:center;margin:53px 0;"><img src="'+b.src+'" style="max-width:100%;max-height:850px;border-radius:4px;" onerror="this.outerHTML=\'<p style=color:#999;font-size:26px;text-align:center;>图片加载失败</p>\'" /></div>';
+        }else if(b.type==='table'){
+          ci+=(gap?'<div style="height:'+gap+'px;"></div>':'')
+             +'<table style="margin:0;border-collapse:collapse;width:100%;font-size:30px;" cellpadding="0" cellspacing="0">'+b.html+'</table>';
         }
         estH+=bh;
         prevType=b.type;
